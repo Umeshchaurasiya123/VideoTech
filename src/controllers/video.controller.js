@@ -35,10 +35,22 @@ const getAllVideos = asyncHandler(async (req, res) => {
             }
         }
 
-
-
     ])
-    
+
+    if(!user || user.length === 0) {
+        throw new ApiError(404, "User not found")
+    }
+
+    if(!user[0]?.videos || user[0].videos.length === 0) {
+        throw new ApiError(404, "Videos not found")
+    }   
+
+    const videos = user[0].videos
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, videos, "Videos fetched successfully"))
+
     
 })
 
