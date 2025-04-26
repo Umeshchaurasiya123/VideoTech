@@ -7,52 +7,140 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 
 
-const getAllVideos = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
-    //TODO: get all videos based on query, sort, pagination
+// const getAllVideos = asyncHandler(async (req, res) => {
+//     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
+//     //TODO: get all videos based on query, sort, pagination
 
-    if(!userId) {
-        throw new ApiError(400, "userId is required")
-    }
+//     if(!userId) {
+//         throw new ApiError(400, "userId is required")
+//     }
 
-    const existedUser = await User.findById(userId)
-    if(!existedUser) {
-        throw new ApiError(404, "User not found")
-    }
+//     const existedUser = await User.findById(userId)
+//     if(!existedUser) {
+//         throw new ApiError(404, "User not found")
+//     }
 
-    const user=await User.aggregate([
-        {
-            $match:{
-                _id: new mongoose.Types.ObjectId(userId)
-            }
-        },
-        {
-            $lookup:{
-                from: "videos",
-                localField: "_id",
-                foreignField: "owner",
-                as: "videos"
-            }
-        }
+//     const user=await User.aggregate([
+//         {
+//             $match:{
+//                 _id: new mongoose.Types.ObjectId(userId)
+//             }
+//         },
+//         {
+//             $lookup:{
+//                 from: "videos",
+//                 localField: "_id",
+//                 foreignField: "owner",
+//                 as: "videos"
+//             }
+//         }
 
-    ])
+//     ])
 
-    if(!user || user.length === 0) {
-        throw new ApiError(404, "User not found")
-    }
+//     if(!user || user.length === 0) {
+//         throw new ApiError(404, "User not found")
+//     }
 
-    if(!user[0]?.videos || user[0].videos.length === 0) {
-        throw new ApiError(404, "Videos not found")
-    }   
+//     if(!user[0]?.videos || user[0].videos.length === 0) {
+//         throw new ApiError(404, "Videos not found")
+//     }   
 
-    const videos = user[0].videos
+//     const videos = user[0].videos
 
-    return res
-    .status(200)
-    .json(new ApiResponse(200, videos, "Videos fetched successfully"))
+//     return res
+//     .status(200)
+//     .json(new ApiResponse(200, videos, "Videos fetched successfully"))
 
     
-})
+// })
+
+const getAllVideos = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10, query, sortBy = "createdAt", sortType = "desc", userId } = req.query;
+
+    // console.log(req.query.userId)
+
+    // Validate userId
+    if (!userId) {
+        throw new ApiError(400, "userIds is required");
+    }
+
+    // Check if the user exists
+    const existedUser = await User.findById(userId);
+    if (!existedUser) {
+        throw new ApiError(404, "User not found");
+    }
+
+    // Convert page and limit to numbers
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+
+    // Build the aggregation pipeline
+    const user = await User.aggregate([
+        // Match the user by userId
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(userId),
+            },
+        },
+        // Lookup videos owned by the user
+        {
+            $lookup: {
+                from: "videos", // Collection name in MongoDB
+                localField: "_id", // Field in the User collection
+                foreignField: "owner", // Field in the Video collection
+                as: "videos", // Alias for the joined data
+            },
+        },
+        // Unwind the videos array to process each video individually
+        {
+            $unwind: "$videos",
+        },
+        // Apply filtering based on the query (search by title)
+        {
+            $match: {
+                ...(query && { "videos.title": { $regex: query, $options: "i" } }), // Case-insensitive search
+            },
+        },
+        // Sort the videos based on the sortBy and sortType parameters
+        {
+            $sort: {
+                [`videos.${sortBy}`]: sortType === "asc" ? 1 : -1, // Ascending or descending order
+            },
+        },
+        // Skip documents for pagination
+        {
+            $skip: (pageNumber - 1) * limitNumber,
+        },
+        // Limit the number of documents returned
+        {
+            $limit: limitNumber,
+        },
+        // Regroup the videos into an array after processing
+        {
+            $group: {
+                _id: "$_id",
+                videos: { $push: "$videos" },
+            },
+        },
+    ]);
+
+    // Handle cases where no videos are found
+    if (!user.length) {
+        throw new ApiError(404, "No videos found");
+    }
+
+    // Extract the videos array from the aggregation result
+     const videos = user[0].videos;
+
+    // Send the response with pagination details
+    return res.status(200).json(
+        new ApiResponse(200, {
+            currentPage: pageNumber,
+            totalVideos: videos.length,
+            videos,
+        }, "Videos fetched successfully")
+    );
+});
 
 const publishAVideo = asyncHandler(async (req, res) => {
     const { title, description} = req.body
