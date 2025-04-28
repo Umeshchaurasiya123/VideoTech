@@ -8,6 +8,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
     //TODO: get all comments for a video
     const {videoId} = req.params
     const {page = 1, limit = 10} = req.query
+    console.log(videoId)
 
     if(!videoId?.trim()){
         throw new ApiError(400, "Video id is required")
@@ -18,11 +19,12 @@ const getVideoComments = asyncHandler(async (req, res) => {
     const comments = await Comment.aggregate([
         {
             $match:{
-                _id:new mongoose.Types.ObjectId(videoId)
+                video:new mongoose.Types.ObjectId(videoId)
             }
         }
 
     ])
+    console.log(comments)
 
     if(!comments || comments.length === 0){
         throw new ApiError(404, "Comments not found")
