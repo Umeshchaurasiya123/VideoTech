@@ -75,7 +75,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 
     if (existingSubscription) {
         subscriber=await Subscription.findByIdAndDelete(existingSubscription._id);
-
+        return res.status(200).json(new ApiResponse(200, subscriber, "Unsubscribed successfully"));
     }
 
     // If the user is not subscribed, subscribe them
@@ -91,7 +91,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
     }
 
     return res.status(200).
-    json(new ApiResponse(200, subscriber, "Subscription toggled successfully"));
+    json(new ApiResponse(200, subscriber, "Subscripe  successfully"));
 
 })
 
@@ -123,7 +123,10 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 
 // controller to return channel list to which user has subscribed
 const getSubscribedChannels = asyncHandler(async (req, res) => {
-    const { subscriberId } = req.params
+    const { channelId } = req.params
+    const subscriberId = channelId
+    console.log("subscriberId", req.params)
+    console.log("subscriberId", subscriberId)
 
     if (!subscriberId?.trim()) {
         throw new ApiError(400, "Subscriber id is required")
