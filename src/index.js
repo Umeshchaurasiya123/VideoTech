@@ -14,6 +14,8 @@ connectDB()
         const assignedPort = server.address().port
         // console.log(`⚙️ Server is running at port : ${process.env.PORT}`);
         console.log(`⚙️ Server is running at port : ${assignedPort}`);
+
+        //console.log(`⚙️ Server is running at port : ${assignedPort}`);
     })
 })
 .catch((err) => {

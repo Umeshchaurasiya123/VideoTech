@@ -10,6 +10,9 @@ const storage = multer.diskStorage({
     }
   })
   
+// Multer configuration for file uploads
+// This middleware handles file uploads and stores them in the 'public/temp' directory
+
 export const upload = multer({ 
     storage, 
 })

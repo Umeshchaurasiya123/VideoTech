@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import {
-    deleteVideo,
     getAllVideos,
+    deleteVideo,
     getVideoById,
     publishAVideo,
     togglePublishStatus,

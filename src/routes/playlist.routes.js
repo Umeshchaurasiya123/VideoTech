@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import {
+    getUserPlaylists,
     addVideoToPlaylist,
     createPlaylist,
     deletePlaylist,
     getPlaylistById,
-    getUserPlaylists,
     removeVideoFromPlaylist,
     updatePlaylist,
 } from "../controllers/playlist.controller.js"
